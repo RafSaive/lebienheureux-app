@@ -1,49 +1,49 @@
 import 'package:flutter/foundation.dart' show ChangeNotifier;
 
 import '../models/article.dart';
-import '../models/category.dart';
 import '../services/local_store.dart';
 import '../services/wp_api.dart';
 
-/// Liste d'articles de l'accueil : pagination, filtre par rubrique, recherche,
-/// et repli sur le cache local quand le réseau manque.
-class ArticlesController extends ChangeNotifier {
-  ArticlesController(this._api, this._store);
+/// Une liste d'articles paginée : la une, une rubrique ou une recherche.
+/// Avec une [cacheKey], la première page est gardée pour s'afficher
+/// immédiatement au prochain lancement et servir hors-ligne.
+class FeedController extends ChangeNotifier {
+  FeedController(this._api, this._store, {this.categoryId, this.cacheKey});
 
   final WpApi _api;
   final LocalStore _store;
+  final int? categoryId;
+  final String? cacheKey;
 
   List<Article> _articles = const [];
-  List<Category> _categories = const [];
-  int? _categoryId;
   String _query = '';
   int _page = 0;
   int _totalPages = 1;
   bool _loading = false;
   bool _loadingMore = false;
   bool _offline = false;
+  bool _started = false;
   String? _error;
 
   // Incrémenté à chaque nouvelle requête de tête : une réponse arrivée après
-  // un changement de filtre est ignorée.
+  // un changement de recherche est ignorée.
   int _generation = 0;
 
   List<Article> get articles => _articles;
-  List<Category> get categories => _categories;
-  int? get categoryId => _categoryId;
   String get query => _query;
   bool get loading => _loading;
   bool get loadingMore => _loadingMore;
   bool get offline => _offline;
   String? get error => _error;
   bool get hasMore => _page < _totalPages;
-  bool get _isUnfiltered => _categoryId == null && _query.isEmpty;
+  bool get _cacheable => cacheKey != null && _query.isEmpty;
 
-  Future<void> init() async {
-    _categories = _store.loadCategories();
-    _articles = _store.loadHome();
-    notifyListeners();
-    await Future.wait([refresh(), _loadCategories()]);
+  /// Affiche le cache puis rafraîchit. Sans effet si déjà lancé.
+  Future<void> start() {
+    if (_started) return Future.value();
+    _started = true;
+    if (_cacheable) _articles = _store.loadList(cacheKey!);
+    return refresh();
   }
 
   Future<void> refresh() async {
@@ -55,7 +55,7 @@ class ArticlesController extends ChangeNotifier {
     try {
       final result = await _api.fetchPosts(
         page: 1,
-        categoryId: _categoryId,
+        categoryId: categoryId,
         search: _query,
       );
       if (generation != _generation) return;
@@ -63,10 +63,12 @@ class ArticlesController extends ChangeNotifier {
       _page = 1;
       _totalPages = result.totalPages;
       _offline = false;
-      if (_isUnfiltered) await _store.saveHome(result.items);
+      if (_cacheable) await _store.saveList(cacheKey!, result.items);
     } on ApiException catch (e) {
       if (generation != _generation) return;
-      final cached = _isUnfiltered ? _store.loadHome() : const <Article>[];
+      final cached = _cacheable
+          ? _store.loadList(cacheKey!)
+          : const <Article>[];
       _articles = cached;
       _page = 0;
       _totalPages = 0;
@@ -89,7 +91,7 @@ class ArticlesController extends ChangeNotifier {
     try {
       final result = await _api.fetchPosts(
         page: _page + 1,
-        categoryId: _categoryId,
+        categoryId: categoryId,
         search: _query,
       );
       if (generation != _generation) return;
@@ -110,27 +112,20 @@ class ArticlesController extends ChangeNotifier {
     }
   }
 
-  Future<void> selectCategory(int? id) {
-    if (id == _categoryId) return Future.value();
-    _categoryId = id;
-    return refresh();
-  }
-
   Future<void> search(String query) {
     final q = query.trim();
     if (q == _query) return Future.value();
     _query = q;
-    return refresh();
-  }
-
-  Future<void> _loadCategories() async {
-    try {
-      final categories = await _api.fetchCategories();
-      _categories = categories;
-      await _store.saveCategories(categories);
+    if (q.isEmpty) {
+      _generation++;
+      _articles = const [];
+      _page = 0;
+      _totalPages = 0;
+      _error = null;
+      _loading = false;
       notifyListeners();
-    } on ApiException {
-      // Les rubriques en cache (ou aucune) restent affichées.
+      return Future.value();
     }
+    return refresh();
   }
 }

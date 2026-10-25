@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../state/favorites_controller.dart';
-import '../widgets/article_card.dart';
+import '../theme.dart';
+import '../widgets/journal_bits.dart';
+import '../widgets/tiles.dart';
 
+/// Articles gardés pour la prochaine pause, lisibles même sans réseau.
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
@@ -12,50 +15,27 @@ class FavoritesScreen extends StatelessWidget {
     final items = context.watch<FavoritesController>().items;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Favoris')),
-      body: items.isEmpty
-          ? const _EmptyFavorites()
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: items.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 16),
-              itemBuilder: (_, i) => ArticleCard(article: items[i]),
-            ),
-    );
-  }
-}
-
-class _EmptyFavorites extends StatelessWidget {
-  const _EmptyFavorites();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.bookmark_border,
-                size: 48, color: theme.colorScheme.onSurfaceVariant),
-            const SizedBox(height: 12),
-            Text(
-              'Aucun favori pour l\'instant',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Touchez le signet d\'un article pour le garder ici, '
-              'même sans connexion.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
+      appBar: AppBar(
+        title: Text('MES FAVORIS', style: Typo.etiquette),
+        shape: const Border(bottom: BorderSide(color: Palette.filet)),
       ),
+      body: items.isEmpty
+          ? ListView(
+              children: const [
+                CapybaraMessage(
+                  title: 'Rien de côté pour l’instant',
+                  text:
+                      'Touchez le signet d’un article pour le garder pour la '
+                      'prochaine pause. Il restera lisible même sans réseau.',
+                ),
+              ],
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              itemCount: items.length,
+              separatorBuilder: (_, _) => const Filet(margin: 18),
+              itemBuilder: (_, i) => PhotoTile(article: items[i], list: items),
+            ),
     );
   }
 }

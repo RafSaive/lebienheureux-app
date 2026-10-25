@@ -15,6 +15,7 @@ const _named = <String, String>{
   'rdquo': '”',
   'laquo': '«',
   'raquo': '»',
+  'rsaquo': '›',
   'euro': '€',
   'copy': '©',
   'reg': '®',
@@ -48,6 +49,13 @@ const _named = <String, String>{
 final _entity = RegExp(r'&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z][a-zA-Z0-9]*);');
 final _tag = RegExp(r'<[^>]*>');
 final _spaces = RegExp(r'\s+');
+final _blockEnd = RegExp(
+  r'</(p|h[1-6]|li|blockquote|figcaption)>|<br\s*/?>',
+  caseSensitive: false,
+);
+
+/// Pictogramme placé en tête des titres du journal (« 🛰️ Starlink… »).
+final _leadingMark = RegExp(r'^\s*([^\p{L}\p{N}\p{P}\s]+)\s+', unicode: true);
 
 /// Remplace les entités HTML (`&#8217;`, `&eacute;`, `&amp;`…) par leur caractère.
 String decodeEntities(String input) {
@@ -70,4 +78,20 @@ String htmlToPlainText(String html) {
   return decodeEntities(html.replaceAll(_tag, ' '))
       .replaceAll(_spaces, ' ')
       .trim();
+}
+
+/// Découpe un contenu HTML en paragraphes de texte brut (pour la lecture à voix haute).
+List<String> htmlToParagraphs(String html) {
+  return html
+      .split(_blockEnd)
+      .map(htmlToPlainText)
+      .where((p) => p.isNotEmpty)
+      .toList();
+}
+
+/// Sépare le pictogramme de tête d'un titre : `('🛰️', 'Starlink…')`.
+(String, String) splitLeadingMark(String title) {
+  final m = _leadingMark.firstMatch(title);
+  if (m == null) return ('', title.trim());
+  return (m.group(1)!, title.substring(m.end).trim());
 }
