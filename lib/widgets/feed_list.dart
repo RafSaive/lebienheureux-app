@@ -17,6 +17,7 @@ class FeedList extends StatefulWidget {
     required this.storageKey,
     this.emptyTitle = 'Rien à lire ici pour l’instant',
     this.emptyText,
+    this.onRefresh,
   });
 
   final FeedController controller;
@@ -24,6 +25,9 @@ class FeedList extends StatefulWidget {
   final String storageKey;
   final String emptyTitle;
   final String? emptyText;
+
+  /// Ce que fait « tirer pour actualiser » (par défaut : la liste seule).
+  final Future<void> Function()? onRefresh;
 
   @override
   State<FeedList> createState() => _FeedListState();
@@ -39,7 +43,7 @@ class _FeedListState extends State<FeedList> {
 
   Future<void> _refresh() async {
     HapticFeedback.lightImpact();
-    await widget.controller.refresh();
+    await (widget.onRefresh ?? widget.controller.refresh)();
   }
 
   @override

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -90,6 +92,7 @@ const wpCategories = [
 MockClient fakeWordPress(
   List<List<Map<String, dynamic>>> pages, {
   Map<int, List<Map<String, dynamic>>> byCategory = const {},
+  List<Map<String, dynamic>> extra = const [],
   List<Uri>? requests,
 }) {
   return MockClient((req) async {
@@ -109,6 +112,18 @@ MockClient fakeWordPress(
             'link': 'https://lebienheureux.be/a-propos/',
           },
       ]);
+    }
+    final single = RegExp(r'/posts/(\d+)$').firstMatch(req.url.path);
+    if (single != null) {
+      final id = int.parse(single.group(1)!);
+      for (final post in [
+        ...pages.expand((p) => p),
+        ...byCategory.values.expand((p) => p),
+        ...extra,
+      ]) {
+        if (post['id'] == id) return _json(post);
+      }
+      return http.Response('{"code":"rest_post_invalid_id"}', 404);
     }
     final category = int.tryParse(q['categories[terms]'] ?? '');
     final source = category == null
@@ -133,3 +148,24 @@ http.Response _json(Object body, {int? totalPages}) => http.Response.bytes(
     'x-wp-totalpages': '${totalPages ?? 1}',
   },
 );
+
+/// Simule le paquet home_widget (widget d'écran d'accueil) : [launchedFrom]
+/// est le lien qui a ouvert l'app ; les appels sont notés dans [calls].
+void mockHomeWidget({String? launchedFrom, List<MethodCall>? calls}) {
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  messenger.setMockMethodCallHandler(const MethodChannel('home_widget'), (
+    call,
+  ) async {
+    calls?.add(call);
+    return switch (call.method) {
+      'initiallyLaunchedFromHomeWidget' => launchedFrom,
+      'updateWidget' => true,
+      _ => null,
+    };
+  });
+  messenger.setMockStreamHandler(
+    const EventChannel('home_widget/updates'),
+    MockStreamHandler.inline(onListen: (_, _) {}),
+  );
+}

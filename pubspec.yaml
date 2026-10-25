@@ -45,6 +45,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   flutter_tts: ^4.2.5
+  home_widget: ^0.10.0
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +58,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -113,3 +115,12 @@ flutter_launcher_icons:
   background_color_ios: "#FAF8F3"
   adaptive_icon_background: "#FAF8F3"
   adaptive_icon_foreground: assets/icon/adaptive.png
+
+# Écran de démarrage : papier du journal et capybara.
+flutter_native_splash:
+  color: "#FAF8F3"
+  image: assets/icon/splash.png
+  android_12:
+    color: "#FAF8F3"
+    image: assets/icon/splash_android12.png
+  web: false

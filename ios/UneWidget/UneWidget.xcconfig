@@ -1,0 +1,4 @@
+// Le widget porte la même version que l'app (exigé par l'App Store).
+#include? "../Flutter/Generated.xcconfig"
+MARKETING_VERSION = $(FLUTTER_BUILD_NAME)
+CURRENT_PROJECT_VERSION = $(FLUTTER_BUILD_NUMBER)

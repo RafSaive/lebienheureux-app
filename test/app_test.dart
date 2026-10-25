@@ -11,11 +11,12 @@ import 'fixtures.dart';
 void main() {
   setUpAll(() => initializeDateFormatting('fr_FR'));
 
-  Future<void> launch(WidgetTester tester) async {
+  Future<void> launch(WidgetTester tester, {List<Uri>? requests}) async {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
 
+    mockHomeWidget();
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final api = WpApi(
@@ -41,6 +42,7 @@ void main() {
             ),
           ],
         },
+        requests: requests,
       ),
     );
 
@@ -121,6 +123,17 @@ void main() {
     await tester.tap(find.byTooltip('Menu'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('MES FAVORIS'));
+    await tester.pumpAndSettle();
+    expect(find.text('Premier article'), findsOneWidget);
+  });
+
+  testWidgets('un retour rapide dans l\'app ne recharge rien', (tester) async {
+    await launch(tester);
+    final binding = tester.binding;
+
+    // Retour rapide : rien ne bouge.
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
     expect(find.text('Premier article'), findsOneWidget);
   });

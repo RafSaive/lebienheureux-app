@@ -124,6 +124,10 @@ ThemeData buildTheme() {
       scrolledUnderElevation: 0,
       centerTitle: true,
     ),
+    iconTheme: const IconThemeData(color: Palette.encre),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(foregroundColor: Palette.encre),
+    ),
     drawerTheme: const DrawerThemeData(
       backgroundColor: Palette.papier,
       shape: RoundedRectangleBorder(),

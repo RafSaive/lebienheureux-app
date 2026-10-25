@@ -19,6 +19,7 @@ class UneView extends StatelessWidget {
 
   static const _withResume = 3;
   static const _une = 6;
+  static const _parBloc = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +29,7 @@ class UneView extends StatelessWidget {
     return FeedList(
       controller: feed,
       storageKey: 'une',
+      onRefresh: () => Future.wait([feed.refresh(), journal.refresh()]),
       rows: (context) {
         final items = feed.articles;
         final rows = <WidgetBuilder>[];
@@ -50,8 +52,15 @@ class UneView extends StatelessWidget {
         }
         rows.add((_) => const Filet(color: Palette.encre, margin: 22));
 
+        // Un article déjà affiché plus haut n'est pas répété dans les blocs.
+        final shown = {for (final a in items.take(_une)) a.id};
         for (final slug in AppConfig.homeSections) {
-          final section = journal.section(slug);
+          final section = journal
+              .section(slug)
+              .where((a) => !shown.contains(a.id))
+              .take(_parBloc)
+              .toList();
+          shown.addAll(section.map((a) => a.id));
           final category = journal.bySlug(slug);
           if (section.isEmpty || category == null) continue;
           rows.add(

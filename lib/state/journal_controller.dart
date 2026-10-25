@@ -14,7 +14,8 @@ class JournalController extends ChangeNotifier {
   final WpApi _api;
   final LocalStore _store;
 
-  static const sectionSize = 4;
+  /// Un peu plus que les 4 affichés : la une retire ceux qu'elle montre déjà.
+  static const sectionSize = 8;
 
   List<Category> _categories = const [];
   Map<String, List<Article>> _sections = const {};

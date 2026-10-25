@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Le Bien Heureux</string>
+    <string name="une_widget_label">La une</string>
+    <string name="une_widget_description">La une du Bien Heureux, mise à jour toute seule.</string>
+    <string name="une_widget_signe">LE BIEN HEUREUX</string>
+    <string name="une_widget_attente">La une arrive dès que le réseau est là.</string>
+</resources>

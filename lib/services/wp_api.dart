@@ -67,6 +67,21 @@ class WpApi {
     return ArticlePage(items, totalPages);
   }
 
+  /// Un article précis (ouvert depuis le widget d'écran d'accueil).
+  Future<Article> fetchPost(int id) async {
+    final res = await _get(
+      _endpoint('posts/$id', {'_embed': 'wp:featuredmedia,wp:term'}),
+    );
+    _check(res);
+    try {
+      return Article.fromWp(jsonDecode(res.body) as Map<String, dynamic>);
+    } on FormatException {
+      throw ApiException('Réponse inattendue du site.');
+    } on TypeError {
+      throw ApiException('Réponse inattendue du site.');
+    }
+  }
+
   /// Toutes les rubriques, y compris celles qui n'ont que des sous-rubriques.
   Future<List<Category>> fetchCategories() async {
     final res = await _get(

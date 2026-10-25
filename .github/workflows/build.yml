@@ -19,6 +19,7 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze
       - run: flutter test
 
@@ -37,10 +38,17 @@ jobs:
           channel: stable
           cache: true
       - run: flutter build apk --release
+      # Widget « La une » : lecture de l'API et rendu, sur la JVM (Robolectric).
+      - run: ./gradlew :app:testDebugUnitTest
+        working-directory: android
+      - run: flutter build appbundle --release
       - uses: actions/upload-artifact@v4
         with:
-          name: lebienheureux-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: lebienheureux-android
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+            android/app/build/widget-preview/
 
   ios:
     needs: test
@@ -52,7 +60,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      # Build non signée : vérifie que l'app compile pour iOS.
+      # Build non signée (app + widget « La une ») : vérifie que tout compile.
       # La signature et l'envoi sur TestFlight demandent un compte Apple Developer.
       - run: flutter build ios --release --no-codesign
       - run: cd build/ios/iphoneos && zip -qr ../../../Runner-unsigned.zip Runner.app

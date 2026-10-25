@@ -56,7 +56,8 @@ class _ArticleReaderState extends State<ArticleReader> {
 
   @override
   void dispose() {
-    _speech.stop();
+    // Différé : on ne prévient pas d'autres widgets pendant le démontage.
+    Future.microtask(_speech.stop);
     _pages.dispose();
     super.dispose();
   }

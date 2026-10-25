@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show ChangeNotifier;
+import 'package:flutter/foundation.dart' show ChangeNotifier, debugPrint;
 import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/article.dart';
@@ -8,6 +8,10 @@ import '../util/html_text.dart';
 /// téléphone. Le texte est lu par blocs, car Android limite la longueur
 /// d'un énoncé.
 class SpeechController extends ChangeNotifier {
+  SpeechController({FlutterTts Function()? engine})
+    : _engine = engine ?? FlutterTts.new;
+
+  final FlutterTts Function() _engine;
   FlutterTts? _tts;
   int? _playingId;
 
@@ -27,17 +31,23 @@ class SpeechController extends ChangeNotifier {
 
   Future<void> _play(Article article) async {
     await stop();
-    final tts = _tts ??= FlutterTts();
-    await tts.setLanguage('fr-FR');
-    await tts.setSpeechRate(0.5);
-    await tts.awaitSpeakCompletion(true);
-
+    // L'état est posé tout de suite : un « Arrêter » touché pendant le
+    // démarrage est pris en compte.
     _playingId = article.id;
     notifyListeners();
 
-    for (final chunk in chunksFor(article)) {
-      if (_playingId != article.id) return;
-      await tts.speak(chunk);
+    try {
+      final tts = _tts ??= _engine();
+      await tts.setLanguage('fr-FR');
+      await tts.setSpeechRate(0.5);
+      await tts.awaitSpeakCompletion(true);
+      for (final chunk in chunksFor(article)) {
+        if (_playingId != article.id) return;
+        await tts.speak(chunk);
+      }
+    } catch (e) {
+      // Pas de moteur vocal ou de voix française : le bouton revient à l'état normal.
+      debugPrint('Lecture à voix haute impossible : $e');
     }
     if (_playingId == article.id) {
       _playingId = null;

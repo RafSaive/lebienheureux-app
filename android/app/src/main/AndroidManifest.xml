@@ -2,7 +2,7 @@
     <!-- Chargement des articles depuis le site. -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="Le Bienheureux"
+        android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -22,6 +22,10 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Les liens du widget sont gérés par home_widget, pas par le routeur Flutter. -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -32,6 +36,18 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Widget d'écran d'accueil « La une ». -->
+        <receiver
+            android:name=".UneWidgetProvider"
+            android:exported="false"
+            android:label="@string/une_widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/une_widget_info" />
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
