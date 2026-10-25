@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Sorties de build Gradle (aperçu du widget, rapports)
+/build/
+/app/build/
