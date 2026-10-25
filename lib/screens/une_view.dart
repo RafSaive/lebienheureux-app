@@ -76,11 +76,14 @@ class UneView extends StatelessWidget {
           }
         }
 
-        if (items.length > _une) {
+        final suite = items.skip(_une).where((a) => !shown.contains(a.id));
+        if (suite.isNotEmpty) {
           rows.add((_) => const Etiquette(label: 'Les jours précédents'));
-          for (var i = _une; i < items.length; i++) {
-            if (i > _une) rows.add((_) => const Filet(margin: 18));
-            rows.add((_) => PhotoTile(article: items[i], list: items));
+          var first = true;
+          for (final a in suite) {
+            if (!first) rows.add((_) => const Filet(margin: 18));
+            first = false;
+            rows.add((_) => PhotoTile(article: a, list: items));
           }
         }
         return rows;

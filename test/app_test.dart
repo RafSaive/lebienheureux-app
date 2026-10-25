@@ -82,6 +82,37 @@ void main() {
     expect(find.text('🔑 BIEN EXPLIQUÉ  •  20 OCTOBRE 2026'), findsOneWidget);
   });
 
+  testWidgets('un article n\'apparaît qu\'une fois sur la une', (tester) async {
+    // Écran très haut : toute la une est construite d'un coup.
+    tester.view.physicalSize = const Size(1170, 30000);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    mockHomeWidget();
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final api = WpApi(
+      client: fakeWordPress(
+        [
+          [for (var i = 1; i <= 8; i++) wpPost(id: i, title: 'Article $i')],
+        ],
+        byCategory: {
+          // 2 est déjà dans les titres de une ; 7 serait aussi dans « Les jours précédents ».
+          4: [
+            wpPost(id: 2, title: 'Article 2'),
+            wpPost(id: 7, title: 'Article 7'),
+          ],
+        },
+      ),
+    );
+    await tester.pumpWidget(LebienheureuxApp(api: api, prefs: prefs));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fin du rouleau : vous avez tout lu !'), findsOneWidget);
+    for (var i = 1; i <= 8; i++) {
+      expect(find.text('Article $i'), findsOneWidget, reason: 'Article $i');
+    }
+  });
+
   testWidgets('on lit un article, on le garde et on passe au suivant', (
     tester,
   ) async {
